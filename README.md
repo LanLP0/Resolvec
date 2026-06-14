@@ -28,6 +28,9 @@ If you have `dotnet` (>= v10.0.0) installed on your system, go to [Releases](htt
 
 If you don't have `dotnet` installed, go to [Releases](https://github.com/LanLP0/Resolvec/releases) and grab the file specific to your Operating System, place them in a dedicated folder to storing programs, then add that folder to your system's `PATH`. Now you can use `resolvec convert` anywhere.
 
+### For all installs,
+`resolvec` requires FFMpeg to work. Please install and add it to your system's `PATH` via [this link](https://ffmpeg.org/download.html)
+
 ## Development
 Contributions for new feature/improving existing feature are welcome!
 
