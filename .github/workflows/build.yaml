@@ -48,25 +48,25 @@ jobs:
         continue-on-error: true
         with:
           name: resolvec-linux
-          path: ci/linux/resolvec
+          path: ./ci/linux/Resolvec
 
       - name: Upload Build Artifacts (Windows)
         uses: actions/upload-artifact@v7.0.0
         continue-on-error: true
         with:
           name: resolvec-win
-          path: ci/win/resolvec.exe
+          path: ./ci/win/Resolvec.exe
 
       - name: Upload Build Artifacts (MacOS)
         uses: actions/upload-artifact@v7.0.0
         continue-on-error: true
         with:
           name: resolvec-macos
-          path: ci/macos/resolvec
+          path: ./ci/macos/Resolvec
           
       - name: Upload Build Artifacts (.NET Tool)
         uses: actions/upload-artifact@v7.0.0
         continue-on-error: true
         with:
           name: resolvec-dotnet
-          path: ci/resolvec*.nupkg
+          path: ./ci/Resolvec*.nupkg
