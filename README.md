@@ -1,8 +1,12 @@
-# Resolvec
-A CLI tool to deal with everything realated to Davinci Resolve.
+<h1 align="center" href="#Resolvec">Resolvec</h1>
+
+<p align="center" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+  <img style="place-self: center" src="https://github.com/LanLP0/Resolvec/actions/workflows/build.yaml/badge.svg" alt="Build Status">
+<p align="center">A CLI tool to deal with everything realated to Davinci Resolve.</p>
+</p>
 
 ## Features
-Currently, `resolvec` came with a single function `resolvec convert`. This is used to convert any Video/Audio file from almost any formats into Davinci Resolve compatible ones (NLE optimized).
+Currently, `resolvec` came with a single function `resolvec convert`. This is used to convert any video/audio file from almost any formats into Davinci Resolve compatible ones (NLE optimized).
 
 This came from the need that the free version of Resolve on Linux has no support for common codecs like h264/h265. `resolvec convert` help to convert to/from fast av1 / prores automatically with minimal user input.
 

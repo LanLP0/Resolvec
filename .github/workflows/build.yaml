@@ -1,4 +1,4 @@
-name: Build Clickbait Server
+name: Build Resolvec
 
 on: [push, pull_request]
 
