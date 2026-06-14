@@ -1,0 +1,72 @@
+name: Build Clickbait Server
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: write # For Remove old artifacts
+      artifact-metadata: write
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10
+
+      - name: Publish app (Windows)
+        run: |
+          dotnet publish -c Release --sc --runtime win-x64 -p:PublishSingleFile=true -o ./ci/win/ ./src/Resolvec/Resolvec.csproj
+          
+      - name: Publish app (MacOS)
+        run: |
+          dotnet publish -c Release --sc --runtime osx-x64 -p:PublishSingleFile=true -o ./ci/macos/ ./src/Resolvec/Resolvec.csproj
+          
+      - name: Publish app (Linux)
+        run: |
+          dotnet publish -c Release --sc --runtime linux-x64 -p:PublishSingleFile=true -o ./ci/linux/ ./src/Resolvec/Resolvec.csproj
+          
+      - name: Package dotnet tool
+        run: |
+          dotnet pack -c Release -o ./ci/ src/Resolvec/Resolvec.csproj
+
+      - name: Remove old artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: "1 month"
+          skip-tags: true
+          skip-recent: 5
+
+      - name: Upload Build Artifacts (Linux)
+        uses: actions/upload-artifact@v7.0.0
+        continue-on-error: true
+        with:
+          name: resolvec-linux
+          path: ci/linux/resolvec
+
+      - name: Upload Build Artifacts (Windows)
+        uses: actions/upload-artifact@v7.0.0
+        continue-on-error: true
+        with:
+          name: resolvec-win
+          path: ci/win/resolvec.exe
+
+      - name: Upload Build Artifacts (MacOS)
+        uses: actions/upload-artifact@v7.0.0
+        continue-on-error: true
+        with:
+          name: resolvec-macos
+          path: ci/macos/resolvec
+          
+      - name: Upload Build Artifacts (.NET Tool)
+        uses: actions/upload-artifact@v7.0.0
+        continue-on-error: true
+        with:
+          name: resolvec-dotnet
+          path: ci/resolvec*.nupkg
