@@ -19,7 +19,7 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
 
     private static readonly Dictionary<string, CodecSettings> CodecPresets = new()
     {
-        { "mp4", new CodecSettings("h264", "mp4", "yuv420le", "aac", "mp3") }
+        { "mp4", new CodecSettings("h264", "mp4", "yuv420p", "aac", "mp3") }
     };
 
     private static readonly Dictionary<string, string[]> FFMpegOptions = new()
