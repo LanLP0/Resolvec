@@ -30,7 +30,7 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
         { "libx264", ["-preset medium", "-crf 20"] },
 
         // Audio
-        { "pcm_s24le", ["-ar 4800"] },
+        { "pcm_s24le", ["-ar 48000"] },
         { "aac", ["-b:a 160k", "-movflags +faststart"] }
     };
 
@@ -160,8 +160,8 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
         AnsiConsole.MarkupLine(fileExistsSkip ? Path.GetFileName(outputPath) + " [yellow]skipped (file exists)[/]" : Path.GetFileName(outputPath));
 
         var options = FFMpegArguments
-            .FromFileInput(input)
-            .OutputToFile(outputPath, settings.Force, config =>
+            .FromFileInput(SanitizeFilePath(input))
+            .OutputToFile(SanitizeFilePath(outputPath), settings.Force, config =>
             {
                 if (isVideo)
                 {
@@ -275,6 +275,18 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
             foreach (var opt in options)
                 settings.FFMpegAudioOptions.Add(opt);
         }
+    }
+
+    /// <summary>
+    /// Sanitize paths before input into ffmpeg
+    /// Note: pathname that contains "[_O48-ao5_40]"  cause issue: Error: Could not find color or style 'nnZN-FDKYwE'
+    /// </summary>
+    /// <param name="path">The file path</param>
+    /// <returns>Sanitized path</returns>
+    private string SanitizeFilePath(string path)
+    {
+        // TODO
+        return path;
     }
 
     /// <returns>Paths to video and audio files (existence checked)</returns>
@@ -402,7 +414,12 @@ public sealed class ConvertCommandSettings : CommandSettings
     [CommandOption("--dry-run")]
     [Description("Don't convert, only show conversions that is about to happen")]
     [DefaultValue(false)]
-    public bool DryRun { get; init; } = false;
+    public bool DryRun { get; init; } =
+#if DEBUG
+        true;
+#else 
+        false;
+#endif
 
     [CommandOption("--ff-video <option>")]
     [Description("Options to be passed directly to ffmpeg (Video)")]
