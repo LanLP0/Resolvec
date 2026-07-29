@@ -1,9 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FFMpegCore;
 using FFMpegCore.Enums;
 using Spectre.Console;
@@ -115,13 +112,13 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
         return 0;
     }
 
-    private async Task ConvertOne(string input, ConvertCommandSettings settings, int count, StringBuilder errorBuilder)
+    private async Task ConvertOne(string inputPath, ConvertCommandSettings settings, int count, StringBuilder errorBuilder)
     {
-        var fData = FFProbe.Analyse(input);
+        var fData = FFProbe.Analyse(inputPath);
         var isVideo = fData.VideoStreams.Count > 0;
         AnsiConsole.Markup("[white bold]{0}[/]", count);
         AnsiConsole.Markup(isVideo ? " [blue]V[/] " : " [yellow]A[/] ");
-        AnsiConsole.Write(Path.GetFileName(input));
+        AnsiConsole.Write(Path.GetFileName(inputPath));
 
         // Find the correct output path
         var outputPath = settings.OutputPath.Value;
@@ -129,20 +126,20 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
         if (!settings.Backward.IsSet) // Add suffix always
         {
             newName =
-                $"{Path.GetFileNameWithoutExtension(input)}.{settings.Suffix}.{(isVideo ? settings.VideoExtension : settings.AudioExtension)}";
+                $"{Path.GetFileNameWithoutExtension(inputPath)}.{settings.Suffix}.{(isVideo ? settings.VideoExtension : settings.AudioExtension)}";
         }
         else // Strip suffix
         {
-            var ext = Path.GetExtension(input);
-            if (input.EndsWith($".{settings.Suffix}{ext}"))
-                newName = string.Concat(Path.GetFileName(input).Split('.')[..^2]) + '.' +
+            var ext = Path.GetExtension(inputPath);
+            if (inputPath.EndsWith($".{settings.Suffix}{ext}"))
+                newName = string.Concat(Path.GetFileName(inputPath).Split('.')[..^2]) + '.' +
                           (isVideo ? settings.VideoExtension : settings.AudioExtension);
-            else newName = $"{Path.GetFileNameWithoutExtension(input)}{ext}";
+            else newName = $"{Path.GetFileNameWithoutExtension(inputPath)}{ext}";
         }
 
         if (outputPath is null)
         {
-            outputPath = Path.Join(Path.GetDirectoryName(input), newName);
+            outputPath = Path.Join(Path.GetDirectoryName(inputPath), newName);
         }
         else
         {
@@ -157,11 +154,13 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
         var fileExistsSkip = !settings.Force && File.Exists(outputPath);
 
         AnsiConsole.Markup(isVideo ? " [blue]->[/] " : " [yellow]->[/] ");
-        AnsiConsole.MarkupLine(fileExistsSkip ? Path.GetFileName(outputPath) + " [yellow]skipped (file exists)[/]" : Path.GetFileName(outputPath));
+        AnsiConsole.MarkupLine(fileExistsSkip
+            ? Markup.Escape(Path.GetFileName(outputPath)) + " [yellow]skipped (file exists)[/]"
+            : Markup.Escape(Path.GetFileName(outputPath)));
 
         var options = FFMpegArguments
-            .FromFileInput(SanitizeFilePath(input))
-            .OutputToFile(SanitizeFilePath(outputPath), settings.Force, config =>
+            .FromFileInput(inputPath)
+            .OutputToFile(outputPath, settings.Force, config =>
             {
                 if (isVideo)
                 {
@@ -188,7 +187,6 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
         
         if (settings.DryRun)
         {
-            // TODO Verbose
             Console.Write("ffmpeg ");
             Console.WriteLine(options.Arguments);
             return;
@@ -239,6 +237,10 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
                 throw new Exception(errorBuilder.ToString());
         }
         else await options.ProcessAsynchronously();
+        
+        // finished
+        if (settings.Delete)
+            File.Delete(inputPath);
     }
 
     /// <summary>
@@ -275,18 +277,6 @@ public sealed class ConvertCommand : AsyncCommand<ConvertCommandSettings>
             foreach (var opt in options)
                 settings.FFMpegAudioOptions.Add(opt);
         }
-    }
-
-    /// <summary>
-    /// Sanitize paths before input into ffmpeg
-    /// Note: pathname that contains "[_O48-ao5_40]"  cause issue: Error: Could not find color or style 'nnZN-FDKYwE'
-    /// </summary>
-    /// <param name="path">The file path</param>
-    /// <returns>Sanitized path</returns>
-    private string SanitizeFilePath(string path)
-    {
-        // TODO
-        return path;
     }
 
     /// <returns>Paths to video and audio files (existence checked)</returns>
@@ -380,6 +370,11 @@ public sealed class ConvertCommandSettings : CommandSettings
     [Description("Convert files back to [[format]] (Default: format = mp4)")]
     [DefaultValue("mp4")]
     public FlagValue<string?> Backward { get; init; }
+
+    [CommandOption("-d|--delete")]
+    [Description("Delete original file after conversion")]
+    [DefaultValue(false)]
+    public bool Delete { get; init; } = false;
 
     [CommandOption("-v|--video-ext <ext>")]
     [Description("Video extension (ffmpeg supported codec)")]
